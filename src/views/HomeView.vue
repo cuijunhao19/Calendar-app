@@ -1,4 +1,4 @@
-<!-- src/views/HomeView.vue - 完整集成版本 -->
+<!-- src/views/HomeView.vue - 修复事件传递 -->
 <template>
     <div class="home">
         <!-- 顶部导航 -->
@@ -25,7 +25,8 @@
         <!-- 日历视图 -->
         <div class="calendar-container">
             <MonthView v-if="viewMode === 'month'" :current-date="currentDate" :events="currentViewEvents"
-                :selected-date="selectedDate" @day-selected="onDaySelected" @event-selected="onEventSelected" />
+                :selected-date="selectedDate" @day-selected="onDaySelected" @event-selected="onEventSelected"
+                @show-events="onShowEvents" />
 
             <WeekView v-else-if="viewMode === 'week'" :current-date="currentDate" :events="currentViewEvents"
                 :selected-date="selectedDate" @day-selected="onDaySelected" @event-selected="onEventSelected"
@@ -48,6 +49,11 @@
         <!-- 事件详情 -->
         <EventDetail v-model:show="showEventDetail" @edit="handleEditEvent" @delete="handleDeleteEvent" />
 
+        <!-- 日期事件列表 -->
+        <DayEventsModal v-model:show="showDayEventsModal" :selected-date="selectedDateForModal"
+            :events="selectedDateEvents" @event-selected="onEventSelected" @edit-event="handleEditEvent"
+            @add-event="handleAddEventFromModal" />
+
         <!-- 操作反馈 -->
         <div v-if="showFeedback" class="feedback-message" :class="feedbackType">
             {{ feedbackMessage }}
@@ -58,19 +64,22 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useCalendarStore } from '@/stores/calendar'
-import { format } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 import MonthView from '@/components/CalendarView/MonthView.vue'
 import WeekView from '@/components/CalendarView/WeekView.vue'
 import DayView from '@/components/CalendarView/DayView.vue'
 import EventForm from '@/components/EventForm.vue'
 import EventDetail from '@/components/EventDetail.vue'
+import DayEventsModal from '@/components/DayEventsModal.vue'
 
 const calendarStore = useCalendarStore()
 
 // 响应式数据
 const showEventForm = ref(false)
 const showEventDetail = ref(false)
+const showDayEventsModal = ref(false)
 const selectedDate = ref(null)
+const selectedDateForModal = ref(null)
 const editingEvent = ref(null)
 const showFeedback = ref(false)
 const feedbackMessage = ref('')
@@ -89,6 +98,15 @@ const viewMode = computed(() => calendarStore.viewMode)
 const currentViewEvents = computed(() => {
     console.log('当前视图事件:', calendarStore.currentViewEvents)
     return calendarStore.currentViewEvents
+})
+
+// 计算选中日期的事件
+const selectedDateEvents = computed(() => {
+    if (!selectedDateForModal.value) return []
+
+    return calendarStore.events.filter(event =>
+        isSameDay(new Date(event.startTime), selectedDateForModal.value)
+    )
 })
 
 const formattedDate = computed(() => {
@@ -130,6 +148,14 @@ const onEventSelected = (event) => {
     showEventDetail.value = true
 }
 
+// 显示日期所有事件（从月视图的"更多"点击）
+const onShowEvents = ({ date, events }) => {
+    console.log('onShowEvents被调用:', date, events)
+    selectedDateForModal.value = date
+    showDayEventsModal.value = true
+    console.log('showDayEventsModal:', showDayEventsModal.value)
+}
+
 // 添加新事件
 const handleAddEvent = () => {
     editingEvent.value = null
@@ -140,7 +166,15 @@ const handleAddEvent = () => {
 const onCreateEvent = (eventData) => {
     editingEvent.value = null
     showEventForm.value = true
-    // 这里可以预填充开始和结束时间
+}
+
+// 从日期事件模态框添加事件
+const handleAddEventFromModal = (date) => {
+    console.log('从模态框添加事件:', date)
+    editingEvent.value = null
+    selectedDate.value = date
+    showEventForm.value = true
+    showDayEventsModal.value = false
 }
 
 // 保存事件（新增和编辑）
@@ -174,9 +208,11 @@ const handleSaveEvent = (eventData) => {
 
 // 编辑事件（从详情页面）
 const handleEditEvent = (event) => {
+    console.log('编辑事件:', event)
     editingEvent.value = event
     showEventForm.value = true
     showEventDetail.value = false
+    showDayEventsModal.value = false
 }
 
 // 删除事件
