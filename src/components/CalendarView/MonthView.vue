@@ -1,4 +1,4 @@
-<!-- src/components/CalendarView/MonthView.vue -->
+<!-- src/components/CalendarView/MonthView.vue - 修复版本 -->
 <template>
     <div class="month-view">
         <div class="calendar-header">
@@ -17,10 +17,13 @@
             }]" @click="selectDay(day.date)">
                 <div class="day-number">{{ day.dayNumber }}</div>
                 <div class="events-preview">
-                    <div v-for="event in day.events.slice(0, 3)" :key="event.id" class="event-dot"
-                        :style="{ backgroundColor: event.color }" :title="event.title"></div>
-                    <div v-if="day.events.length > 3" class="more-events">
-                        +{{ day.events.length - 3 }}
+                    <div v-for="event in day.events.slice(0, 3)" :key="event.id" class="event-item"
+                        :style="{ backgroundColor: event.color }" :title="event.title" @click.stop="selectEvent(event)">
+                        <span class="event-title">{{ event.title }}</span>
+                    </div>
+                    <div v-if="day.events.length > 3" class="more-events"
+                        @click.stop="showAllEvents(day.date, day.events)">
+                        +{{ day.events.length - 3 }} 更多
                     </div>
                 </div>
             </div>
@@ -57,7 +60,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['day-selected'])
+const emit = defineEmits(['day-selected', 'event-selected', 'show-events'])
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -65,15 +68,24 @@ const monthDays = computed(() => {
     const start = startOfWeek(startOfMonth(props.currentDate), { weekStartsOn: 0 })
     const end = endOfWeek(endOfMonth(props.currentDate), { weekStartsOn: 0 })
 
-    return eachDayOfInterval({ start, end }).map(date => ({
-        date,
-        dayNumber: format(date, 'd'),
-        isCurrentMonth: isSameMonth(date, props.currentDate),
-        isToday: isToday(date),
-        events: props.events.filter(event =>
+    const days = eachDayOfInterval({ start, end }).map(date => {
+        const dayEvents = props.events.filter(event =>
             isSameDay(new Date(event.startTime), date)
         )
-    }))
+
+        console.log(`日期 ${format(date, 'yyyy-MM-dd')} 有 ${dayEvents.length} 个事件`)
+
+        return {
+            date,
+            dayNumber: format(date, 'd'),
+            isCurrentMonth: isSameMonth(date, props.currentDate),
+            isToday: isToday(date),
+            events: dayEvents
+        }
+    })
+
+    console.log('月视图天数:', days.length, '总事件数:', props.events.length)
+    return days
 })
 
 const isSelected = (date) => {
@@ -81,7 +93,18 @@ const isSelected = (date) => {
 }
 
 const selectDay = (date) => {
+    console.log('选择日期:', date)
     emit('day-selected', date)
+}
+
+const selectEvent = (event) => {
+    console.log('选择事件:', event)
+    emit('event-selected', event)
+}
+
+const showAllEvents = (date, events) => {
+    console.log('显示所有事件:', date, events)
+    emit('show-events', { date, events })
 }
 </script>
 
@@ -118,7 +141,7 @@ const selectDay = (date) => {
 }
 
 .calendar-day {
-    min-height: 100px;
+    min-height: 120px;
     background: white;
     padding: 8px;
     cursor: pointer;
@@ -162,15 +185,37 @@ const selectDay = (date) => {
     gap: 2px;
 }
 
-.event-dot {
-    height: 4px;
-    border-radius: 2px;
-    margin: 1px 0;
+.event-item {
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.event-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.event-title {
+    font-weight: bold;
 }
 
 .more-events {
     font-size: 10px;
     color: #666;
     margin-top: 2px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.more-events:hover {
+    background: #f0f0f0;
 }
 </style>

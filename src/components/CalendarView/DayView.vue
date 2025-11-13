@@ -1,4 +1,4 @@
-<!-- src/components/CalendarView/DayView.vue - 修复版本 -->
+<!-- src/components/CalendarView/DayView.vue - 简化修复版本 -->
 <template>
     <div class="day-view">
         <div class="day-header">
@@ -15,8 +15,6 @@
 
             <div class="events-column">
                 <div v-for="hour in hours" :key="hour" class="hour-slot" @click="createEvent(hour)">
-
-
                     <div v-for="event in getEventsForHour(hour)" :key="event.id" class="event-block" :style="{
                         backgroundColor: event.color,
                         top: getEventPosition(event),
@@ -37,15 +35,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import {
-    format,
-    isSameDay,
-    setHours,
-    setMinutes,
-    startOfDay,
-    endOfDay,
-    parseISO
-} from 'date-fns'
+import { format, isSameDay, setHours, setMinutes } from 'date-fns'
 
 const props = defineProps({
     currentDate: {
@@ -69,51 +59,31 @@ const weekday = computed(() => {
     return format(props.currentDate, 'EEEE')
 })
 
-// 时间槽（6:00 - 23:00）
+// 时间槽（7:00 - 21:00）
 const hours = computed(() => {
-    return Array.from({ length: 18 }, (_, i) => i + 6)
+    return Array.from({ length: 15 }, (_, i) => i + 7)
 })
 
-// 获取当天的事件 - 简化版本，直接使用isSameDay
+// 获取当天的事件 - 简化版本
 const dayEvents = computed(() => {
-    console.log('所有事件:', props.events)
-    console.log('当前日期:', props.currentDate)
-
+    console.log('日视图 - 所有事件:', props.events)
     const filtered = props.events.filter(event => {
-        const eventStart = new Date(event.startTime)
-        const isSame = isSameDay(eventStart, props.currentDate)
-        console.log(`事件 "${event.title}":`, eventStart, '同一天:', isSame)
+        const eventDate = new Date(event.startTime)
+        const isSame = isSameDay(eventDate, props.currentDate)
+        console.log(`事件 "${event.title}":`, eventDate, '同一天:', isSame)
         return isSame
     })
-
-    console.log('过滤后的事件:', filtered)
+    console.log('日视图 - 过滤后事件:', filtered)
     return filtered
 })
 
-// 获取全天事件 - 暂时简化
-const allDayEvents = computed(() => {
-    return []
-})
-
-// 获取指定小时的事件 - 简化版本
+// 获取指定小时的事件
 const getEventsForHour = (hour) => {
-    return dayEvents.value.filter(event => {
-        const eventStart = new Date(event.startTime)
-        return eventStart.getHours() === hour
-    })
-}
-
-// 调试用的版本
-const getEventsForHourDebug = (hour) => {
     const events = dayEvents.value.filter(event => {
-        const eventStart = new Date(event.startTime)
-        const matches = eventStart.getHours() === hour
-        if (matches) {
-            console.log(`小时 ${hour} 匹配事件:`, event.title, eventStart)
-        }
-        return matches
+        const eventHour = new Date(event.startTime).getHours()
+        return eventHour === hour
     })
-    console.log(`小时 ${hour} 的事件数量:`, events.length)
+    console.log(`小时 ${hour} 的事件:`, events.length)
     return events
 }
 
@@ -133,7 +103,7 @@ const getEventHeight = (event) => {
     const start = new Date(event.startTime)
     const end = new Date(event.endTime)
     const duration = (end - start) / (1000 * 60) // 分钟
-    return `${Math.max((duration / 60) * 100, 20)}%` // 最小高度20%
+    return `${Math.max((duration / 60) * 100, 25)}%` // 最小高度25%
 }
 
 // 格式化事件时间
@@ -156,14 +126,9 @@ const selectEvent = (event) => {
 }
 
 // 调试辅助函数
-const formatDebugDate = (dateStr) => {
+const formatTime = (dateStr) => {
     const date = new Date(dateStr)
-    return format(date, 'yyyy-MM-dd HH:mm')
-}
-
-const isSameDayDebug = (event) => {
-    const eventStart = new Date(event.startTime)
-    return isSameDay(eventStart, props.currentDate)
+    return format(date, 'HH:mm')
 }
 </script>
 
@@ -232,19 +197,6 @@ const isSameDayDebug = (event) => {
     background: #f8f9fa;
 }
 
-/* 调试信息样式 */
-.debug-info {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    background: rgba(255, 0, 0, 0.1);
-    color: red;
-    font-size: 10px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    z-index: 1;
-}
-
 .event-block {
     position: absolute;
     left: 4px;
@@ -270,28 +222,23 @@ const isSameDayDebug = (event) => {
 .event-time {
     font-size: 12px;
     opacity: 0.9;
-    margin-bottom: 4px;
 }
 
-/* 调试面板 */
-.debug-panel {
+/* 调试信息 */
+.debug-info {
     padding: 16px;
     background: #f8f9fa;
     border-top: 1px solid #ddd;
     font-size: 12px;
-    color: #666;
-    max-height: 200px;
-    overflow-y: auto;
 }
 
-.debug-panel h4 {
+.debug-info h4 {
     margin: 0 0 8px 0;
     color: #333;
 }
 
-.debug-event {
-    padding: 4px;
+.event-debug {
+    padding: 2px 0;
     border-bottom: 1px solid #eee;
-    font-family: monospace;
 }
 </style>
