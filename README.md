@@ -3,16 +3,40 @@
 ## 项目简介
 
 基于 Vue 3 + Vite 开发的现代化日历应用，支持多视图展示、完整日程管理、提醒功能、数据导入导出及农历显示，可通过 Capacitor 跨端部署至 Android。
-### 相关页面展示
-- 主页（月）视图:
-![主页](./show/HomeView.jpeg)<br />
-- 日视图：
-![日视图](./show/DayView.jpeg)<br />
-- 事件查看：
-![事件查看](./show/EventDetail.jpg)<br />
-- 移动端展示：
-![移动端](./show/AndroidShow.png)<br />
-更多展示请前往[show文件夹](./show/)查看
+
+## 相关页面展示
+
+采用网格布局统一展示，点击图片可查看原图，更多截图见 [show 文件夹](./show/)。
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin: 16px 0;">
+  <!-- 主页（月视图） -->
+  <div style="text-align: center;">
+    <h4 style="margin: 0 0 8px 0; font-size: 14px;">主页（月视图）</h4>
+    <img src="./show/HomeView.jpeg" alt="主页（月视图）" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">含农历显示+日程预览</p>
+  </div>
+
+  <!-- 日视图 -->
+  <div style="text-align: center;">
+    <h4 style="margin: 0 0 8px 0; font-size: 14px;">日视图</h4>
+    <img src="./show/DayView.jpeg" alt="日视图" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">时间槽+详细日程</p>
+  </div>
+
+  <!-- 事件查看 -->
+  <div style="text-align: center;">
+    <h4 style="margin: 0 0 8px 0; font-size: 14px;">事件查看</h4>
+    <img src="./show/EventDetail.jpeg" alt="事件查看" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">日程详情+编辑/删除</p>
+  </div>
+
+  <!-- 移动端展示 -->
+  <div style="text-align: center;">
+    <h4 style="margin: 0 0 8px 0; font-size: 14px;">移动端展示（Android）</h4>
+    <img src="./show/AndroidShow.png" alt="移动端展示" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">Capacitor 跨端适配</p>
+  </div>
+</div>
 
 ## 核心功能
 
