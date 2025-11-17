@@ -5,13 +5,13 @@
 基于 Vue 3 + Vite 开发的现代化日历应用，支持多视图展示、完整日程管理、提醒功能、数据导入导出及农历显示，可通过 Capacitor 跨端部署至 Android。
 ### 相关页面展示
 - 主页（月）视图:
-![主页](./show/HomeView.jpeg)
+![主页](./show/HomeView.jpeg)<br />
 - 日视图：
-![日视图](./show/DayView.jpeg)
+![日视图](./show/DayView.jpeg)<br />
 - 事件查看：
-![事件查看](./show/EventDetail.jpeg)
+![事件查看](./show/EventDetail.jpg)<br />
 - 移动端展示：
-![移动端](./show/AndroidShow.png)
+![移动端](./show/AndroidShow.png)<br />
 更多展示请前往[show文件夹](./show/)查看
 
 ## 核心功能
