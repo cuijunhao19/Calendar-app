@@ -1,6 +1,6 @@
-<!-- src/components/EventDetail.vue -->
+<!-- 在EventDetail.vue中添加农历信息 -->
 <template>
-    <div v-if="show" class="modal-overlay" @click.self="closeModal">
+    <div v-if="show && event" class="modal-overlay" @click.self="closeModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>事件详情</h3>
@@ -8,7 +8,6 @@
             </div>
 
             <div class="event-detail">
-                <!-- 事件颜色标识 -->
                 <div class="event-color-bar" :style="{ backgroundColor: event.color }"></div>
 
                 <div class="event-main-info">
@@ -18,8 +17,26 @@
                         <div class="info-item">
                             <span class="info-icon">📅</span>
                             <div class="info-content">
-                                <div class="info-label">时间</div>
+                                <div class="info-label">公历时间</div>
                                 <div class="info-value">{{ formatEventTime(event) }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 添加农历时间 -->
+                        <div class="info-item" v-if="lunarDate">
+                            <span class="info-icon">🌙</span>
+                            <div class="info-content">
+                                <div class="info-label">农历时间</div>
+                                <div class="info-value">{{ lunarDate }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 添加生肖信息 -->
+                        <div class="info-item" v-if="zodiac">
+                            <span class="info-icon">🐯</span>
+                            <div class="info-content">
+                                <div class="info-label">生肖</div>
+                                <div class="info-value">{{ zodiac }}</div>
                             </div>
                         </div>
 
@@ -74,6 +91,7 @@
 import { computed } from 'vue'
 import { format, isSameDay } from 'date-fns'
 import { useCalendarStore } from '@/stores/calendar'
+import LunarCalendar from '@/utils/lunar'
 
 const props = defineProps({
     show: {
@@ -89,7 +107,23 @@ const calendarStore = useCalendarStore()
 // 计算当前选中的事件
 const event = computed(() => calendarStore.selectedEvent)
 
-// 格式化事件时间显示
+// 计算农历信息
+const lunarInfo = computed(() => {
+    if (!event.value) return null
+    const startDate = new Date(event.value.startTime)
+    return LunarCalendar.solarToLunar(startDate)
+})
+
+const lunarDate = computed(() => {
+    if (!lunarInfo.value) return ''
+    return `${lunarInfo.value.lunarYearName} ${lunarInfo.value.lunarMonthName}${lunarInfo.value.lunarDayName}`
+})
+
+const zodiac = computed(() => {
+    return lunarInfo.value?.zodiac || ''
+})
+
+// 格式化事件时间
 const formatEventTime = (event) => {
     if (!event) return ''
 
@@ -97,15 +131,8 @@ const formatEventTime = (event) => {
     const end = new Date(event.endTime)
 
     if (isSameDay(start, end)) {
-        // 同一天的事件
-        if (start.getHours() === 0 && start.getMinutes() === 0 &&
-            end.getHours() === 23 && end.getMinutes() === 59) {
-            return `${format(start, 'yyyy年MM月dd日')} (全天)`
-        } else {
-            return `${format(start, 'yyyy年MM月dd日 HH:mm')} - ${format(end, 'HH:mm')}`
-        }
+        return `${format(start, 'yyyy年MM月dd日 HH:mm')} - ${format(end, 'HH:mm')}`
     } else {
-        // 跨天事件
         return `${format(start, 'yyyy年MM月dd日 HH:mm')} - ${format(end, 'yyyy年MM月dd日 HH:mm')}`
     }
 }
@@ -130,6 +157,7 @@ const handleDelete = () => {
     }
 }
 </script>
+
 
 <style scoped>
 .modal-overlay {

@@ -26,6 +26,12 @@
                     {{ view.label }}
                 </button>
 
+                <!-- 农历切换按钮 -->
+                <button class="view-btn lunar-toggle" :class="{ active: showLunar }" @click="toggleLunar">
+                    <span class="lunar-icon">{{ showLunar ? '🌙' : '☀️' }}</span>
+                    {{ showLunar ? '农历' : '公历' }}
+                </button>
+
                 <!-- 数据管理按钮 -->
                 <button class="view-btn data-management" @click="showDataManagement = true">
                     数据管理
@@ -36,15 +42,15 @@
         <!-- 日历视图 -->
         <div class="calendar-container">
             <MonthView v-if="viewMode === 'month'" :current-date="currentDate" :events="currentViewEvents"
-                :selected-date="selectedDate" @day-selected="onDaySelected" @event-selected="onEventSelected"
-                @show-events="onShowEvents" />
+                :selected-date="selectedDate" :show-lunar="showLunar" @day-selected="onDaySelected"
+                @event-selected="onEventSelected" @show-events="onShowEvents" />
 
             <WeekView v-else-if="viewMode === 'week'" :current-date="currentDate" :events="currentViewEvents"
                 :selected-date="selectedDate" @day-selected="onDaySelected" @event-selected="onEventSelected"
                 @create-event="onCreateEvent" />
 
-            <DayView v-else :current-date="currentDate" :events="currentViewEvents" @event-selected="onEventSelected"
-                @create-event="onCreateEvent" />
+            <DayView v-else :current-date="currentDate" :events="currentViewEvents" :show-lunar="showLunar"
+                @event-selected="onEventSelected" @create-event="onCreateEvent" />
         </div>
 
         <!-- 浮动操作按钮 -->
@@ -102,6 +108,7 @@ const editingEvent = ref(null)
 const showFeedback = ref(false)
 const feedbackMessage = ref('')
 const feedbackType = ref('success')
+const showLunar = ref(true) // 新增：控制农历显示
 
 // 视图配置
 const views = [
@@ -142,6 +149,11 @@ const switchView = (view) => {
     calendarStore.viewMode = view
 }
 
+// 切换农历显示
+const toggleLunar = () => {
+    showLunar.value = !showLunar.value
+    showFeedbackMessage(showLunar.value ? '已显示农历' : '已隐藏农历', 'info')
+}
 const goToPrevious = () => {
     calendarStore.goToPrevious()
 }
@@ -438,6 +450,27 @@ onMounted(() => {
     background: white;
     color: #1f2328;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 添加农历切换按钮样式 */
+.lunar-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white !important;
+}
+
+.lunar-toggle:hover {
+    background: linear-gradient(135deg, #5a6fd8, #6a4190) !important;
+}
+
+.lunar-toggle.active {
+    background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+}
+
+.lunar-icon {
+    font-size: 14px;
 }
 
 /* 数据管理按钮 */

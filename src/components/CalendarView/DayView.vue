@@ -1,8 +1,17 @@
-<!-- src/components/CalendarView/DayView.vue - 简化修复版本 -->
+<!-- src/components/CalendarView/DayView.vue -->
 <template>
     <div class="day-view">
         <div class="day-header">
-            <h2>{{ formattedDate }}</h2>
+            <div class="date-info">
+                <h2>{{ formattedDate }}</h2>
+                <div class="lunar-info" v-if="showLunar">
+                    <span class="lunar-date">农历 {{ fullLunarDate }}</span>
+                    <span class="zodiac" v-if="zodiac">生肖: {{ zodiac }}</span>
+                </div>
+                <div class="festival-info" v-if="festivalInfo.hasFestival">
+                    <span class="festival-badge">🎉 {{ festivalDisplay }}</span>
+                </div>
+            </div>
             <div class="weekday">{{ weekday }}</div>
         </div>
 
@@ -28,14 +37,13 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { format, isSameDay, setHours, setMinutes } from 'date-fns'
+import LunarCalendar from '@/utils/lunar'
 
 const props = defineProps({
     currentDate: {
@@ -45,6 +53,10 @@ const props = defineProps({
     events: {
         type: Array,
         default: () => []
+    },
+    showLunar: {
+        type: Boolean,
+        default: true
     }
 })
 
@@ -59,32 +71,45 @@ const weekday = computed(() => {
     return format(props.currentDate, 'EEEE')
 })
 
+// 农历信息
+const lunarInfo = computed(() => {
+    return LunarCalendar.solarToLunar(props.currentDate)
+})
+
+const fullLunarDate = computed(() => {
+    return LunarCalendar.getFullLunarString(props.currentDate)
+})
+
+const zodiac = computed(() => {
+    return lunarInfo.value.zodiac
+})
+
+const festivalInfo = computed(() => {
+    return LunarCalendar.getFestivalInfo(props.currentDate)
+})
+
+const festivalDisplay = computed(() => {
+    return festivalInfo.value.solarFestival[0] || festivalInfo.value.lunarFestival[0] || '节日'
+})
+
 // 时间槽（7:00 - 21:00）
 const hours = computed(() => {
     return Array.from({ length: 15 }, (_, i) => i + 7)
 })
 
-// 获取当天的事件 - 简化版本
+// 获取当天的事件
 const dayEvents = computed(() => {
-    console.log('日视图 - 所有事件:', props.events)
-    const filtered = props.events.filter(event => {
-        const eventDate = new Date(event.startTime)
-        const isSame = isSameDay(eventDate, props.currentDate)
-        console.log(`事件 "${event.title}":`, eventDate, '同一天:', isSame)
-        return isSame
-    })
-    console.log('日视图 - 过滤后事件:', filtered)
-    return filtered
+    return props.events.filter(event =>
+        isSameDay(new Date(event.startTime), props.currentDate)
+    )
 })
 
 // 获取指定小时的事件
 const getEventsForHour = (hour) => {
-    const events = dayEvents.value.filter(event => {
+    return dayEvents.value.filter(event => {
         const eventHour = new Date(event.startTime).getHours()
         return eventHour === hour
     })
-    console.log(`小时 ${hour} 的事件:`, events.length)
-    return events
 }
 
 // 格式化小时显示
@@ -124,12 +149,6 @@ const createEvent = (hour) => {
 const selectEvent = (event) => {
     emit('event-selected', event)
 }
-
-// 调试辅助函数
-const formatTime = (dateStr) => {
-    const date = new Date(dateStr)
-    return format(date, 'HH:mm')
-}
 </script>
 
 <style scoped>
@@ -145,9 +164,44 @@ const formatTime = (dateStr) => {
     border-bottom: 1px solid #eee;
 }
 
+.date-info {
+    margin-bottom: 8px;
+}
+
 .day-header h2 {
     margin: 0 0 8px 0;
     color: #333;
+    font-size: 24px;
+}
+
+.lunar-info {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.lunar-date {
+    color: #e91e63;
+    font-weight: 500;
+}
+
+.zodiac {
+    color: #2196f3;
+}
+
+.festival-info {
+    margin-top: 4px;
+}
+
+.festival-badge {
+    background: linear-gradient(135deg, #ff4081, #f50057);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
 .weekday {
@@ -224,21 +278,19 @@ const formatTime = (dateStr) => {
     opacity: 0.9;
 }
 
-/* 调试信息 */
-.debug-info {
-    padding: 16px;
-    background: #f8f9fa;
-    border-top: 1px solid #ddd;
-    font-size: 12px;
-}
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .day-header {
+        padding: 16px;
+    }
 
-.debug-info h4 {
-    margin: 0 0 8px 0;
-    color: #333;
-}
+    .day-header h2 {
+        font-size: 20px;
+    }
 
-.event-debug {
-    padding: 2px 0;
-    border-bottom: 1px solid #eee;
+    .lunar-info {
+        flex-direction: column;
+        gap: 4px;
+    }
 }
 </style>

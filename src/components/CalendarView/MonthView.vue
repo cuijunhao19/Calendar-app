@@ -1,4 +1,4 @@
-<!-- src/components/CalendarView/MonthView.vue - 修复版本 -->
+<!-- src/components/CalendarView/MonthView.vue -->
 <template>
     <div class="month-view">
         <div class="calendar-header">
@@ -13,9 +13,24 @@
                 'current-month': day.isCurrentMonth,
                 'today': day.isToday,
                 'selected': isSelected(day.date),
-                'has-events': day.events.length > 0
+                'has-events': day.events.length > 0,
+                'has-festival': day.hasFestival
             }]" @click="selectDay(day.date)">
-                <div class="day-number">{{ day.dayNumber }}</div>
+                <div class="solar-date">
+                    <div class="day-number">{{ day.dayNumber }}</div>
+                    <div v-if="day.festival" class="festival-indicator" :title="day.festival">
+                        🎉
+                    </div>
+                </div>
+
+                <!-- 农历显示 -->
+                <div class="lunar-info">
+                    <div class="lunar-date">{{ day.lunarDate }}</div>
+                    <div v-if="day.festival" class="festival-name" :title="day.festival">
+                        {{ day.festival }}
+                    </div>
+                </div>
+
                 <div class="events-preview">
                     <div v-for="event in day.events.slice(0, 3)" :key="event.id" class="event-item"
                         :style="{ backgroundColor: event.color }" :title="event.title" @click.stop="selectEvent(event)">
@@ -44,6 +59,7 @@ import {
     isToday,
     isSameDay
 } from 'date-fns'
+import LunarCalendar from '@/utils/lunar'
 
 const props = defineProps({
     currentDate: {
@@ -57,6 +73,10 @@ const props = defineProps({
     selectedDate: {
         type: Date,
         default: null
+    },
+    showLunar: {
+        type: Boolean,
+        default: true
     }
 })
 
@@ -73,18 +93,23 @@ const monthDays = computed(() => {
             isSameDay(new Date(event.startTime), date)
         )
 
-        console.log(`日期 ${format(date, 'yyyy-MM-dd')} 有 ${dayEvents.length} 个事件`)
+        // 获取农历信息
+        const lunarDate = props.showLunar ? LunarCalendar.getLunarDisplayString(date) : ''
+        const festivalInfo = LunarCalendar.getFestivalInfo(date)
+        const festival = festivalInfo.solarFestival[0] || festivalInfo.lunarFestival[0] || ''
 
         return {
             date,
             dayNumber: format(date, 'd'),
             isCurrentMonth: isSameMonth(date, props.currentDate),
             isToday: isToday(date),
-            events: dayEvents
+            events: dayEvents,
+            lunarDate,
+            festival,
+            hasFestival: festivalInfo.hasFestival
         }
     })
 
-    console.log('月视图天数:', days.length, '总事件数:', props.events.length)
     return days
 })
 
@@ -93,17 +118,14 @@ const isSelected = (date) => {
 }
 
 const selectDay = (date) => {
-    console.log('选择日期:', date)
     emit('day-selected', date)
 }
 
 const selectEvent = (event) => {
-    console.log('选择事件:', event)
     emit('event-selected', event)
 }
 
 const showAllEvents = (date, events) => {
-    console.log('显示所有事件:', date, events)
     emit('show-events', { date, events })
 }
 </script>
@@ -172,12 +194,54 @@ const showAllEvents = (date, events) => {
     border: 2px solid #2196f3;
 }
 
-.day-number {
-    font-size: 14px;
-    font-weight: bold;
+.calendar-day.has-festival {
+    background: linear-gradient(135deg, #fff9c4, #ffffff);
+}
+
+/* 公历日期 */
+.solar-date {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 4px;
 }
 
+.day-number {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.festival-indicator {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+/* 农历信息 */
+.lunar-info {
+    margin-bottom: 6px;
+    min-height: 32px;
+}
+
+.lunar-date {
+    font-size: 10px;
+    color: #e91e63;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.festival-name {
+    font-size: 9px;
+    color: #f44336;
+    font-weight: bold;
+    background: #ffebee;
+    padding: 1px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 事件预览 */
 .events-preview {
     flex: 1;
     display: flex;
@@ -217,5 +281,25 @@ const showAllEvents = (date, events) => {
 
 .more-events:hover {
     background: #f0f0f0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+    }
+
+    .lunar-info {
+        min-height: 24px;
+    }
+
+    .lunar-date {
+        font-size: 9px;
+    }
+
+    .festival-name {
+        font-size: 8px;
+    }
 }
 </style>
